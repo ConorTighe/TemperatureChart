@@ -4,23 +4,19 @@ import { Chart, ChartTypeRegistry } from "chart.js/auto";
 import ForcastAPI from "../api/Forcast";
 import 'chartjs-adapter-moment';
 import { LineWithErrorBarsChart, LineWithErrorBarsController, PointWithErrorBar } from 'chartjs-chart-error-bars';
-
-// register controller in chart.js and ensure the defaults are set
-interface IGetMovingAvgTemp {
-    lat?: number;
-    long?: number;
-}
+import { useLocation } from '../hooks/location';
 
 interface IDaysOptions {
     value: string,
     label: string,
 }
 
-export default function useChart({ lat, long }: IGetMovingAvgTemp) {
+export default function useChart() {
     const myChart = useRef<Chart>();
     const [isLoading, setLoading] = useState<boolean>(true);
     const [days, setDays] = useState<string>();
     const [daysOptions, setDaysOptions] = useState<IDaysOptions[]>([]);
+    const { latitude, longitude } = useLocation();
 
     Chart.register(LineWithErrorBarsChart, LineWithErrorBarsController, PointWithErrorBar);
 
@@ -43,6 +39,12 @@ export default function useChart({ lat, long }: IGetMovingAvgTemp) {
     const handleUpdateDays = (newDays: string) => {
         setDays(newDays);
     }
+
+    const handleSetupDaysConfig = (totalDays: number) => {
+        setDays(totalDays.toString());
+        const options = Array.from({length: totalDays},(_, index)=> ({ value: (index + 1).toString(), label: (index + 1).toString() }))
+        setDaysOptions(options);
+    }
      
     useEffect(() => {
         const canvas = document.getElementById('myChart') as HTMLCanvasElement;
@@ -50,21 +52,18 @@ export default function useChart({ lat, long }: IGetMovingAvgTemp) {
 
         const createChart = async () => {  
 
-            if (!ctx || !lat || !long) return;
-            const { data } = await ForcastAPI.getMovingAvgTemp({ lat, long })
+            if (!ctx || !latitude || !longitude) return;
+            const { data } = await ForcastAPI.getMovingAvgTemp({ lat: latitude, long: longitude })
 
             if (myChart.current) myChart.current.destroy();
             if (!data) return;
 
-            if(!days || !daysOptions){
-                setDays(data.daily.temperature_2m_max.length);
-                const options = Array.from({length: data.daily.temperature_2m_max.length},(_, index)=> ({ value: (index + 1).toString(), label: (index + 1).toString() }))
-                setDaysOptions(options);
-            } 
+            const totalDaysToDisplay: number = data.daily.temperature_2m_max.length
+            if(!days || !daysOptions) handleSetupDaysConfig(totalDaysToDisplay);
 
-            const tempByDays = data.daily.temperature_2m_max.slice(0, days);
+            const temperaturesToDisplay = data.daily.temperature_2m_max.slice(0, days);
 
-            const temperature = tempByDays.map((point: number, i: number) => {
+            const temperatureChartData = temperaturesToDisplay.map((point: number, i: number) => {
                 return {
                     y: point,
                     x: data.daily.time[i],
@@ -74,9 +73,7 @@ export default function useChart({ lat, long }: IGetMovingAvgTemp) {
 
             const datasets = [{
                 label: 'Daily Tempature',
-                data: temperature,
-                yMin: 1.96,
-                yMax: 2.96,
+                data: temperatureChartData,
                 fill: false,
                 borderColor: '#F47174',
                 tension: 0.1
@@ -105,7 +102,7 @@ export default function useChart({ lat, long }: IGetMovingAvgTemp) {
         createChart();
         setLoading(false);
 
-    }, [lat, long, setLoading, days, daysOptions])
+    }, [setLoading, days, daysOptions, latitude, longitude])
 
     return { isLoading, days, daysOptions, handleUpdateDays }
 
