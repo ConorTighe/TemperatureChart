@@ -22,11 +22,3 @@ test('Home screen to load and navigation to work', () => {
 
   expect(window.location.href).toEqual('http://localhost/dashboard')
 });
-
-const datasource = {
-  label: 'Daily Max Tempature',
-  data: [{ x: 1, y: "12-01-1995"}],
-  fill: false,
-  borderColor: '#F47174',
-  tension: 0.1
-}
