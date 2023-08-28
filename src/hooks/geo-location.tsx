@@ -1,13 +1,13 @@
 import {useState, useEffect, SetStateAction} from 'react';
 
-interface IGetMovingAvgTemp {
+export interface IGeoLocation {
     latitude?: number;
     longitude?: number;
 }
 
 
-export const useLocation = () => {
-  const [position, setPosition] = useState<IGetMovingAvgTemp>({});
+const useGeoLocation = () => {
+  const [position, setPosition] = useState<IGeoLocation>({});
   const [error, setError] = useState<string>();
   
   const onChange = ({coords}: any) => {
@@ -20,6 +20,7 @@ export const useLocation = () => {
   const onError = (error: { message: SetStateAction<string | undefined>; }) => {
     setError(error.message);
   };
+  
   useEffect(() => {
     const geo = navigator.geolocation;
     if (!geo) {
@@ -31,3 +32,5 @@ export const useLocation = () => {
   }, []);
   return {...position, error};
 }
+
+export default useGeoLocation

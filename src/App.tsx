@@ -1,11 +1,11 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import Home from './components/home';
-import Dashboard from './components/dashboard';
+import Home from './components/home/home';
+import Dashboard from './components/dashboard/dashboard';
 
 function App() {
     return (
-    <div>
+        <div>
           <Routes>
               <Route index
               key={"/home"} 
